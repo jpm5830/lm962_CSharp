@@ -1,13 +1,25 @@
 ﻿using System;
 
-namespace Tests
+namespace Lobstermania
 {
-    class RNGTest
+    class LM962
     {
         const bool DEBUG_LINE_LEVEL = false; // enable to see each line
-        const int REELSIZE = 47;
-        const int NUMTESTS = 47000000; // 47M
-        const double EXPECTED_PROBABILITY = 1.0 / 47.0;
+        const bool PRINT_RANDOM_INDEXES = true; // enable to print randomly selected slot indexes for each reel
+
+        const int NUM_REELS = 5;
+        const int GAMEBOARD_ROWS = 5;
+        readonly string[] SYMBOLS123 = { "WS", "LM", "BU", "BO", "LH", "TU", "CL", "SG", "SF", "LO", "LT" }; // All 11 game symbols
+        readonly string[] SYMBOLS45 =  { "WS", "LM", "BU", "BO", "LH", "TU", "CL", "SG", "SF", "LT" }; // Reels 4 and 5 -- missing LO (bonus) symbol
+        readonly int[][] SYMBOL_COUNTS = new int[][]
+        {
+            new int[] { 2, 4, 4, 6, 5, 6, 6, 5, 5, 2, 2 },
+            new int[] { 2, 4, 4, 4, 4, 4, 6, 6, 5, 5, 2 },
+            new int[] { 1, 3, 5, 4, 6, 5, 5, 5, 6, 6, 2 },
+            new int[] { 4, 4, 4, 4, 6, 6, 6, 6, 8, 2 },
+            new int[] { 2, 4, 5, 4, 7, 7, 6, 6, 7, 2 }
+        };
+
         readonly int[,] PAYOUTS =
         {
             {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -17,162 +29,137 @@ namespace Tests
             { 10000, 1000, 500, 500, 500, 250, 200, 200, 150, 0, 200 }
         };
 
-        readonly byte[] SYMBOLS_PER_REEL = new byte[5] { 47, 46, 48, 50, 50 };
+        public static readonly Random rand = new Random(); // Random Number Generator (RNG) object
 
-        public static readonly Random rand = new Random();
-        readonly int[] slots = new int[REELSIZE];
-        readonly double[] prob = new double[REELSIZE];
-        double maxDifferenceFromExpected = 0;
-
-        int hitCount = 0;
-        int hitSpins = 0;
-        double hitFreq = 0.0; // line hit frequency. 1.00 = 100%
-
-        int paybackSpins = 0;
-        int paybackCredits = 0; // Line + Scatter winnings in credits (Line wins includes bonus wins)
-        double paybackPercentage = 0.0; // Payback %, 1.00 = 100%
-
-        int lineNum = 0;
-
-        int scatterWinCredits = 0;
-        int scatterWinCount = 0;
-
-        int bonusWinCount = 0;
-        int bonusWinSum = 0;
-
-
-        public void RunRNGTest()
+        string[][] reels = new string[][] // 5 reels in this game
         {
-            for (int i = 0; i < NUMTESTS; i++)
-            {
-                int r = rand.Next(REELSIZE); // get the random index into slots[]
-                slots[r]++;
-            }
+            new string[47], // 47 slots in this reel
+            new string[46],
+            new string[48],
+            new string[50],
+            new string[50]
+        };
 
-            for (int i = 0; i < REELSIZE; i++)
-            {
-                // Perentage difference from expectehitCountd probability
-                prob[i] = EXPECTED_PROBABILITY - (double)slots[i] / (double)NUMTESTS;
-                if (Math.Abs(prob[i]) > maxDifferenceFromExpected)
-                    maxDifferenceFromExpected = prob[i];
-                Console.WriteLine("{0,-5}{1,-18:P15}", i, prob[i]);
-            }
+        string[,] gameBoard = new string[GAMEBOARD_ROWS, NUM_REELS];
 
-            Console.WriteLine("\nMax difference from expected = {0:P15}\n", maxDifferenceFromExpected);
-        } // End method RunRNGTest
-
-        public int GetGameboardReelCombos()
+        public LM962()
         {
-            string symbols = "ABCDEFGHIJK";
-            int combos = 0;
-
-            foreach (char s1 in symbols)
-                foreach (char s2 in symbols)
-                    foreach (char s3 in symbols)
-                    {
-                        if (!((s1.Equals(s2) && s2.Equals(s3)) && (s1.Equals('A') || s1.Equals('B') || s1.Equals('C'))))
-                            combos++;
-                        else
-                            Console.WriteLine("{0}, {1}, {2}", s1, s2, s3);
-                    }
-            return combos;
-        }
-
-        public void HitFreq()
-        {
-            string symbols123 = "ABCDEFGHIJK"; // 11 distinct symbols for reels 1 thru 3
-            string symbols45 = "ABCDEFGHIK"; // 10 distinct symbols for reels 4 and 5 (missing J or Bonus symbol)
-
-            char[] line = new char[5];
-            hitSpins = 0;
-            hitCount = 0;
-            hitFreq = 0.0;
-
-            foreach (char s1 in symbols123) // reel 1
-                foreach (char s2 in symbols123) // reel 2
-                    foreach (char s3 in symbols123) // reel 3
-                        foreach (char s4 in symbols45) // reel 4
-                            foreach (char s5 in symbols45) // reel 5
-                            {
-                                hitSpins++;
-                                if (s1.Equals(s2) && s2.Equals(s3) && s1.Equals('J')) // Bonus win
-                                {
-                                    hitCount++;
-                                    continue;
-                                }
-                                line[0] = s1; line[1] = s2; line[2] = s3; line[3] = s4; line[4] = s5;
-
-                                byte count = 1; // count of consecutive matching symbols, left to right 
-
-                                for (byte i = 1; i < 5; i++)
-                                    // Only count Wilds going left to right
-                                    if (line[i].Equals(line[0]) || line[i].Equals('A'))
-                                        count++;
-                                    else
-                                        break;
-
-                                // count variable now set for number of consecutive line[0] symbols (1 based)
-
-                                if (count < 2) continue; // no win
-                                if (count == 2 && (line[0].Equals('A') || line[0].Equals('B'))) { hitCount++; continue; } // WS2 or LM2
-                                if (count > 2) hitCount++;
-                            } // End foreach s5
-            hitFreq = (double)hitCount / (double)hitSpins;
-
-        } // End method HitFreq
-
-        public void PaybackPercentage()
-        {
-            string symbols123 = "ABCDEFGHIJK"; // 11 distinct symbols for reels 1 thru 3
-            string symbols45 = "ABCDEFGHIK"; // 10 distinct symbols for reels 4 and 5 (missing J or Bonus symbol)
-
-            char[] line = new char[5];
-            paybackSpins = 0;
-            paybackCredits = 0;
-            paybackPercentage = 0.0;
-            char[] reel1 = new char[47];
-            byte[] r1Counts = { 2, 4, 4, 6, 5, 6, 6, 5, 5, 2, 2 };
-            char[] reel2 = new char[46];
-            byte[] r2Counts = { 2, 4, 4, 4, 4, 4, 6, 6, 5, 5, 2 };
-            char[] reel3 = new char[48];
-            byte[] r3Counts = { 1, 3, 5, 4, 6, 5, 5, 5, 6, 6, 2 };
-            char[] reel4 = new char[50];
-            byte[] r4Counts = { 4, 4, 4, 4, 6, 6, 6, 6, 8, 2 };
-            char[] reel5 = new char[50];
-            byte[] r5Counts = { 2, 4, 5, 4, 7, 7, 6, 6, 7, 2 };
-
             // Build the reels
-            int idx = 0;
-            for (byte i = 0; i < 11; i++) // index into symbols123
-                for (byte j = 0; j < r1Counts[i]; j++) // index into reel rxCounts
-                    reel1[idx++] = symbols123[i];
-
-            idx = 0;
-            for (byte i = 0; i < 11; i++) // index into symbols123
-                for (byte j = 0; j < r2Counts[i]; j++) // index into reel rxCounts
-                    reel2[idx++] = symbols123[i];
-
-            idx = 0;
-            for (byte i = 0; i < 11; i++) // index into symbols123
-                for (byte j = 0; j < r3Counts[i]; j++) // index into reel rxCounts
-                    reel3[idx++] = symbols123[i];
-
-            idx = 0;
-            for (byte i = 0; i < 10; i++) // index into symbols45
-                for (byte j = 0; j < r4Counts[i]; j++) // index into reel rxCounts
-                    reel4[idx++] = symbols45[i];
-
-            idx = 0;
-            for (byte i = 0; i < 10; i++) // index into symbols45
-                for (byte j = 0; j < r5Counts[i]; j++) // index into reel rxCounts
-                    reel5[idx++] = symbols45[i];
+            BuildReels();
 
             // Randomize the reels
-            ArrayShuffle.Shuffle(reel1);
-            ArrayShuffle.Shuffle(reel2);
-            ArrayShuffle.Shuffle(reel3);
-            ArrayShuffle.Shuffle(reel4);
-            ArrayShuffle.Shuffle(reel5);
+            for(int i=0;i<NUM_REELS;i++) // randomize each of the 5 reels
+                ArrayShuffle.Shuffle(reels[i]);
+
+            PrintReels();
+            UpdateGameboard();
+            PrintGameboard();
+
+        } // End constructor
+
+        private void BuildReels()
+        {
+            for (int i = 0; i < 3; i++) // 1st 3 reels
+            {
+                int idx = 0; // reel slot index
+
+                for (int j = 0; j < SYMBOLS123.Length; j++)
+                    for (int k = 0; k < SYMBOL_COUNTS[i][j]; k++) // number of times to repeat each symbol
+                        reels[i][idx++] = SYMBOLS123[j]; // assign symbol to slot
+            }
+
+            for (int i = 3; i < 5; i++) // last 2 reels (they don't have the LO (bonus) symbol)
+            {
+                int idx = 0; // reel slot index
+
+                for (int j = 0; j < SYMBOLS45.Length; j++)
+                    for (int k = 0; k < SYMBOL_COUNTS[i][j]; k++) // number of times to repeat each symbol
+                        reels[i][idx++] = SYMBOLS45[j]; // assign symbol to slot
+            }
+
+        } // End method BuildReels
+
+        private void PrintReels()
+        {
+            for(int num=0; num<NUM_REELS; num++) // all 5 reels
+            {
+                Console.Write("\nReel[{0}]: [  ", num);
+                for (int s = 0; s < reels[num].Length - 1; s++)
+                    Console.Write("{0}, ", reels[num][s]);
+                Console.WriteLine("{0} ]", reels[num][reels[num].Length-2]);
+            }
+        } // End method PrintReels
+
+        public void Spin()
+        {
+            UpdateGameboard();
+        } // End method Spin
+
+        private void PrintRandomIndexes(int[] randIdxs)
+        {
+            Console.Write("\nRandom Indexes: [ ");
+            foreach (int ri in randIdxs)
+                Console.Write("{0}  ",ri);
+            Console.WriteLine(" ]");
+
+        } // End method PrintRandomIndexes
+
+        public void UpdateGameboard()
+        {
+            int[] lineIdxs = new int[5]; // Random starting slots for each reel
+            for (int i = 0; i < NUM_REELS; i++)
+                lineIdxs[i] = rand.Next(reels[i].Length);
+            if (PRINT_RANDOM_INDEXES)
+                PrintRandomIndexes(lineIdxs);
+
+            int i1, i2, i3;
+            int r = 0; // reel number 1-5 zero adjusted
+
+            foreach (int reelIdx in lineIdxs)
+            {
+                // set i1,i2, i3 to consecutive slot numbers on this reel, wrap if needed
+                i1 = reelIdx;
+
+                // set i2, correct if past last slot in reel
+                if ((i1 + 1) == reels[r].Length)
+                    i2 = 0;
+                else
+                    i2 = i1 + 1;
+
+                // set i3, correct if past last slot in reel
+                if ((i2 + 1) == reels[r].Length)
+                    i3 = 0;
+                else
+                    i3 = i2 + 1;
+
+                // i1, i2, i3 are now set to consecutive slot indexes on this reel (r)
+                // Populate Random Gameboard
+                gameBoard[0, r] = reels[r][i1];
+                gameBoard[1, r] = reels[r][i2];
+                gameBoard[2, r] = reels[r][i3];
+
+                r++; // increment to next reel
+            } // end foreach
+
+        } // End method UpdateGameboard
+
+        private void PrintGameboard()
+        {
+            Console.WriteLine("\nGAMEBOARD:");
+            Console.WriteLine("------------------");
+            for (int r = 0; r < GAMEBOARD_ROWS; r++)
+            {
+                for (int c = 0; c < NUM_REELS; c++)
+                    Console.Write("{0}  ", gameBoard[r, c]);
+                Console.WriteLine();
+            }
+
+        }
+
+        /*
+        public void PaybackPercentage()
+        {
+
 
             byte[] lineIdxs = new byte[5];
 
@@ -213,7 +200,7 @@ namespace Tests
                                 {
                                     // set i1,i2, i3 to consecutive slot numbers on this reel, wrap if needed
                                     i1 = reelIdx;
-                                    
+
                                     // set i2, correct if past last slot in reel
                                     if ((byte)(i1 + 1) == SYMBOLS_PER_REEL[r])
                                         i2 = 0;
@@ -282,45 +269,6 @@ namespace Tests
 
         } // End method PaybackPercentage
 
-        public void TestPaybackPercentage()
-        {
-            string symbols123 = "ABCJK"; // 11 distinct symbols for reels 1 thru 3
-            string symbols45 = "ABCK"; // 10 distinct symbols for reels 4 and 5 (missing J or Bonus symbol)
-
-            char[] line = new char[5];
-            paybackSpins = 0;
-            paybackCredits = 0;
-            paybackPercentage = 0.0;
-            hitCount = 0;
-            hitSpins = 0;
-            hitFreq = 0.0; // line hit frequency. 1.00 = 100%
-            
-            // set in GetLinePayout()
-            bonusWinCount = 0; 
-            bonusWinSum = 0;
-
-            // 2,000 combinations 
-
-            foreach (char s1 in symbols123)
-                foreach (char s2 in symbols123)
-                    foreach (char s3 in symbols123)
-                        foreach (char s4 in symbols45)
-                            foreach (char s5 in symbols45)
-                            {
-                                line[0] = s1; line[1] = s2; line[2] = s3; line[3] = s4; line[4] = s5;
-                                paybackCredits += GetLinePayout(line);
-                                hitSpins++;
-                                paybackSpins++;
-                                if (paybackCredits > 0)
-                                    hitCount++;
-                            }
-
-
-            paybackPercentage = (double)paybackCredits / (double)paybackSpins; // total wins divided by credits spent (1 credit per line bet)
-            hitFreq = (double)hitCount / (double)hitSpins;
-
-
-        } // End method TestPaybackPercentage
         public int GetLinePayout(char[] line)
         {
             byte count = 1; // count of consecutive matching symbols, left to right 
@@ -377,7 +325,7 @@ namespace Tests
                     // 3 wilds pay more than 4 of anything but lobstermania
                     // 4 wilds pay more than 5 of anything but bobstermania
                     // Take greatest win possible
-                    
+
                     // Leading 4 wilds
                     if (line[1].Equals('A') && line[2].Equals('A') && line[3].Equals('A') )
                     {
@@ -393,7 +341,7 @@ namespace Tests
                             count = 4;
                         }
                     }
-                    
+
                     // Leading 3 wilds
                     if (line[1].Equals('A') && line[2].Equals('A') && line[3].Equals('B') && !line[4].Equals('A') && !line[4].Equals('B'))
                     {
@@ -489,40 +437,8 @@ namespace Tests
 
         } // End method PrintLine
 
+        */
 
-
-        public static void Main()
-        {
-            RNGTest rng = new RNGTest();
-            //rng.RunRNGTest();
-            DateTime start_t = DateTime.Now;
-
-            rng.HitFreq();
-            Console.WriteLine("\nThere are {0:N0} winning line combinations out of {1:N0} spins ({2:P1} hit frequency).\n",
-                rng.hitCount, rng.hitSpins, rng.hitFreq);
-           
-            rng.PaybackPercentage();
-            
-            Console.WriteLine("\nThere are {0:N0} winning line combinations out of {1:N0} spins ({2:P1} hit frequency).",
-                rng.hitCount, rng.paybackSpins, rng.hitFreq);
-
-            Console.WriteLine("\n{0:N0} credits spent, {1:N0} credits won, {2:P1} payback percentage.",
-                rng.paybackSpins, rng.paybackCredits, rng.paybackPercentage);
-            
-            Console.WriteLine("\nThere were {0:N0} bonus wins out of {1:N0} spins. (Average win was {2:N0} credits per bonus.)",
-                rng.bonusWinCount,rng.paybackSpins,(double)rng.bonusWinSum / (double)rng.bonusWinCount);
-            
-            Console.WriteLine("\nThere were {0:N0} scatter wins out of {1:N0} spins. (Average win was {2:N0} credits per scatter.)\n",
-                rng.scatterWinCount, rng.paybackSpins, (double)rng.scatterWinCredits / (double)rng.scatterWinCount);
-
-            Console.WriteLine("Average number of spins to bonus:   {0:N0}", (double)rng.paybackSpins / (double)rng.bonusWinCount);
-            Console.WriteLine("Average number of spins to scatter: {0:N0}\n", (double)rng.paybackSpins / (double)rng.scatterWinCount);
-
-            DateTime end_t = DateTime.Now;
-            TimeSpan runtime = end_t - start_t;
-            Console.WriteLine("Run completed in {0:t}\n", runtime);
-        } // End method Main
-
-    } // End class RNGTest
+    } // End class LM962
 
 }

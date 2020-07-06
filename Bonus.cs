@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Tests
+namespace Lobstermania
 {
     static class Bonus
     {
@@ -65,8 +65,8 @@ namespace Tests
             if (!IsInitialized)
                 Initialize(); // Build the PrizeLookupTable
 
-            BouysPicked = RNGTest.rand.Next(2, 5); // 2, 3, or 4
-            PrizesPerBuoy = RNGTest.rand.Next(2, 4); // 2 or 3
+            BouysPicked = LM962.rand.Next(2, 5); // 2, 3, or 4
+            PrizesPerBuoy = LM962.rand.Next(2, 4); // 2 or 3
             int numPrizes = BouysPicked * PrizesPerBuoy;
 
             // Set all elements of the Prizes array to 0
@@ -76,7 +76,7 @@ namespace Tests
             BonusWin = 0;
             for(int i=0; i<numPrizes; i++)
             {
-                int idx = RNGTest.rand.Next(322); // indexes between 0 and 321 inclusive
+                int idx = LM962.rand.Next(322); // indexes between 0 and 321 inclusive
                 Prizes[i] = PrizeLookupTable[idx];
                 BonusWin += Prizes[i];
             }
