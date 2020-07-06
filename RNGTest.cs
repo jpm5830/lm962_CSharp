@@ -1,8 +1,4 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Xml;
+﻿using System;
 
 namespace Tests
 {
@@ -40,7 +36,6 @@ namespace Tests
 
         int scatterWinCredits = 0;
         int scatterWinCount = 0;
-        double scatterWinPercentage = 0.0; // Scatter wins as a % or all spins (paybackSpins),  % 1.00 = 100%
 
         int bonusWinCount = 0;
         int bonusWinSum = 0;
@@ -434,8 +429,10 @@ namespace Tests
             int lineWin = PAYOUTS[count, GetSymIndex(sym)];
 
             if(DEBUG_LINE_LEVEL)
+#pragma warning disable CS0162 // Unreachable code detected
                 PrintLine(line, sym, count, lineWin);
-            
+#pragma warning restore CS0162 // Unreachable code detected
+
             return lineWin;
 
         } // End method GetLinePayout
