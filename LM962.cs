@@ -293,15 +293,6 @@ namespace Lobstermania
             return symidx;
         } // End method GetSymIndex
 
-        private void PrintRandomIndexes(int[] randIdxs)
-        {
-            Console.Write("\nRandom Indexes: [ ");
-            foreach (int ri in randIdxs)
-                Console.Write("{0}  ",ri);
-            Console.WriteLine("]");
-
-        } // End method PrintRandomIndexes
-
         public void UpdateGameboard()
         {
             int[] lineIdxs = new int[5]; // Random starting slots for each reel
@@ -381,8 +372,11 @@ namespace Lobstermania
 
         private void PrintPayline(int payLineNum, string[] line, int payout)
         { 
-            Console.Write("Payline[{0}]: [  ", payLineNum);
-                
+            if (payLineNum > 9) // for formatting purposes
+                Console.Write("Payline[{0}]: [  ", payLineNum);
+            else
+                Console.Write("Payline[{0}]:  [  ", payLineNum);
+
             foreach (string sym in line)
                     Console.Write("{0}  ", sym);
 

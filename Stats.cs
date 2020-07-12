@@ -60,6 +60,8 @@ namespace Lobstermania
             jackpotFreq = (double)numJackpots / ((double)spins * (double)activePaylines);
 
             Console.WriteLine("\nPlaying {0} active paylines.", activePaylines);
+            Console.WriteLine("\nMEASURED SESSION STATISTICS:");
+            Console.WriteLine("----------------------------");
 
             Console.WriteLine("\nThere are {0:N0} winning line combinations out of {1:N0} spins ({2:P1} hit frequency).",
                 hitCount, spins, hitFreq);
