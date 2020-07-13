@@ -12,23 +12,13 @@ namespace Lobstermania
         private readonly static int[] PrizeLookupTable = new int[NUM_PRIZE_SLOTS];
         private static int BouysPicked = 0; // will be either 2, 3, or 4
         private static int PrizesPerBuoy = 0; // will be either 2 or 3
-        public static int[] Prizes = new int[MAX_PRIZES]; // each individual prize amount, array will be right sized
+        private readonly static int[] Prizes = new int[MAX_PRIZES]; // each individual prize amount, array will be right sized
         private static int BonusWin = 0;
         private static bool IsInitialized = false;
 
         // Properties
 
         // Methods
-        public static void Display()
-        {
-            if (!IsInitialized)
-                Initialize(); // Build the PrizeLookupTable
-
-            Console.Write("\n           Bonus Prizes: [");
-            for (int i = 0; i < MAX_PRIZES - 1; i++)
-                Console.Write("{0}, ", Prizes[i]);
-            Console.Write("{0}]", Prizes[MAX_PRIZES-1]);
-        }
         private static void Initialize() 
         {
             // Set each PrizeLookupTable element to prize value in credits

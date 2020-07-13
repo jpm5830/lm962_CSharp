@@ -2,7 +2,7 @@
 
 namespace Lobstermania
 {
-    public class ArrayShuffle
+    class ArrayShuffle
     {
         public static void Shuffle<T>(T[] items)
         {

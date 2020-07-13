@@ -5,6 +5,13 @@ namespace Lobstermania
 {
 	public static class Program
 	{
+
+        // IMPORTANT NUMBERS
+        // -----------------
+        // Theoretical spins per JACKPOT 8,107,500
+        // Number of all slot combinations (47x46x48x50x50 -- 1 slot per reel) = 259,440,000
+        // Number of all possible symbol combinations on a line (11x11x11x10x10) = 133,100
+
         public static void Main()
         {
         mainMenu:
@@ -118,7 +125,7 @@ namespace Lobstermania
             }
 
             Console.WriteLine();
-            game.DisplayStats();
+            game.stats.DisplaySessionStats(numPayLines);
 
             DateTime end_t = DateTime.Now;
             TimeSpan runtime = end_t - start_t;

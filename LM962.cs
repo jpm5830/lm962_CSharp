@@ -43,7 +43,7 @@ namespace Lobstermania
 
         readonly string[,] gameBoard = new string[GAMEBOARD_ROWS, NUM_REELS];
         readonly string[][] payLines = new string[MAX_PAYLINES][];
-        public int activePaylines = MAX_PAYLINES; //default of 15
+        public int activePaylines = MAX_PAYLINES; //number of active paylines, default of 15
 
         // Print flags
         public bool printReels = false;
@@ -106,6 +106,9 @@ namespace Lobstermania
                 PrintGameboard();
             UpdatePaylines();
 
+            Console.WriteLine("WINNING PAY LINES");
+            Console.WriteLine("-----------------");
+
             for (int i = 0; i < activePaylines; i++) // for each payline
             {                
                 int linePayout = GetLinePayout(payLines[i]); // will include any bonus win
@@ -130,11 +133,6 @@ namespace Lobstermania
             }
 
         } // End method Spin
-
-        public void DisplayStats()
-        {
-            stats.DisplaySessionStats(activePaylines);
-        } // End method DisplayStats
 
         private int GetLinePayout(string[] line)
         {
@@ -188,10 +186,11 @@ namespace Lobstermania
                             }
                         }
 
-                    sym = altSym;
+                    sym = altSym; // count and sym are now set correctly 
 
+                    // ANOMOLY FIX
                     // 3 wilds pay more than 4 of anything but lobstermania
-                    // 4 wilds pay more than 5 of anything but bobstermania
+                    // 4 wilds pay more than 5 of anything but lobstermania
                     // Take greatest win possible
 
                     // Leading 4 wilds
@@ -226,7 +225,7 @@ namespace Lobstermania
                 Done:
                     break; // case "WS"
 
-                default:
+                default: // Handle all other 1st symbols not handled in cases above
                     sym = line[0];
                     for (int i = 1; i < NUM_REELS; i++)
                         if ((line[i] == sym) || (line[i] == "WS"))
@@ -293,7 +292,7 @@ namespace Lobstermania
             return symidx;
         } // End method GetSymIndex
 
-        public void UpdateGameboard()
+        private void UpdateGameboard()
         {
             int[] lineIdxs = new int[5]; // Random starting slots for each reel
             for (int i = 0; i < NUM_REELS; i++)
