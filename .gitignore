@@ -338,6 +338,8 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
 *.diagsession
 /misc/HarriganDixon2009-JOGIPARSheets.pdf
 /misc/LL_Payouts.xlsx
+/misc/LM962.docx
