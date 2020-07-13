@@ -6,7 +6,10 @@ This project implements a Windows console simulator for the Lobstermania slot ma
     
     SYMBOLS123 = { "WS", "LM", "BU", "BO", "LH", "TU", "CL", "SG", "SF", "LO", "LT" }; // All 11 game symbols, Corresponds to: 
                  { "Wild", "Lobstermania", "Buoy", "Boat", "Lighthouse", "Tuna", "Clam", "Seagull", "Starfish", "Bonus", "Scatter" }
-              
+      
+# Development Environment
+This program was compiled and written using Visual Studio 2019, Version 16.6.2 and C#.  It was targeted for the .NET Framework version 4.7.2 and is a release build. 
+
 # Example use cases
 1. As a learning tool to understand video slot machine probabilities, payouts, and algorithms.
 2. As a base engine for developing a graphical version of the game.
