@@ -94,7 +94,7 @@ namespace Lobstermania
 
             DateTime start_t = DateTime.Now;
 
-            Console.WriteLine("Progress Bar\n");
+            Console.WriteLine("Progress Bar ({0:N0} spins)\n",numSpins);
             Console.WriteLine("0%       100%");
             Console.WriteLine("|--------|");
 

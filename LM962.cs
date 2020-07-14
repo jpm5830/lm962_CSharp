@@ -106,8 +106,11 @@ namespace Lobstermania
                 PrintGameboard();
             UpdatePaylines();
 
-            Console.WriteLine("WINNING PAY LINES");
-            Console.WriteLine("-----------------");
+            if (printPaylines)
+            {
+                Console.WriteLine("WINNING PAY LINES");
+                Console.WriteLine("-----------------");
+            }
 
             for (int i = 0; i < activePaylines; i++) // for each payline
             {                
