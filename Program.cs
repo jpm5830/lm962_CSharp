@@ -16,7 +16,7 @@ namespace Lobstermania
         {
         mainMenu:
             Console.Clear();
-            Console.WriteLine("MAIN MENU:  PRESS:\n");
+            Console.WriteLine("PRESS:\n");
             Console.WriteLine("\t1 for Bulk Game Spins\n\t2 for Individual Games\n\t3 to quit\n");
             Console.Write("Your choice: ");
             string res = Console.ReadLine();
