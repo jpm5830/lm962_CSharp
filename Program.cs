@@ -1,89 +1,98 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 
 namespace Lobstermania
 {
-	public static class Program
-	{
-
+    public static class Program
+    {
         // IMPORTANT NUMBERS
         // -----------------
         // Theoretical spins per JACKPOT 8,107,500
         // Number of all slot combinations (47x46x48x50x50 -- 1 slot per reel) = 259,440,000
         // Number of all possible symbol combinations on a line (11x11x11x10x10) = 133,100
 
+        private static int GetIntValue(string prompt, int min, int max, Action onError = null)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = Console.ReadLine();
+                if (int.TryParse(input, out int value) && min <= value && value <= max)
+                    return value;
+                onError?.Invoke();
+            }
+        }
+
+        private static long GetLongValue(string prompt, long min, long max, Action onError = null)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                string input = Console.ReadLine();
+                if (long.TryParse(input, out long value) && min <= value && value <= max)
+                    return value;
+                onError?.Invoke();
+            }
+        }
+
+        private static void RunBulkGameSpins()
+        {
+            var numSpins = GetLongValue("Enter the number of spins: ",
+                                        min: 1, max: long.MaxValue,
+                                        () => Console.Error.WriteLine("***ERROR: Please enter a positive number greater than 0 !!!"));
+
+            var paylines = GetIntValue("Enter the number of active paylines (1 through 15): ",
+                                       min: 1, max: 15,
+                                       () => Console.Error.WriteLine("***ERROR: Please enter a positive number between 1 and 15 !!!"));
+
+            Console.Clear();
+            BulkGameSpins(numSpins, paylines);
+            Console.WriteLine("Press any key to continue to Main Menu ...");
+            Console.ReadKey();
+        }
+
+        private static string BuildMenuString()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("PRESS:");
+            sb.AppendLine();
+            sb.AppendLine("\t1 for Bulk Game Spins");
+            sb.AppendLine("\t2 for Individual Games");
+            sb.AppendLine("\t3 to quit");
+            sb.AppendLine();
+            sb.Append("Your choice: ");
+            return sb.ToString();
+        }
+
         public static void Main()
         {
-        mainMenu:
-            Console.Clear();
-            Console.WriteLine("PRESS:\n");
-            Console.WriteLine("\t1 for Bulk Game Spins\n\t2 for Individual Games\n\t3 to quit\n");
-            Console.Write("Your choice: ");
-            string res = Console.ReadLine();
+            var menu = BuildMenuString();
             int num;
-            try
+            do
             {
-                num = Convert.ToInt32(res);
-            } 
-            catch (Exception)
-            {
-                Console.WriteLine("\n***ERROR: Please enter number 1, 2, or 3 !!!");
-                Thread.Sleep(2000); // sleep for 2 seconds
-                goto mainMenu;
-            }
-            switch(num)
-            {
+                Console.Clear();
+
+                num = GetIntValue(prompt: menu,
+                                  min: 1, max: 3,
+                                  onError: () =>
+                                  {
+                                      Console.WriteLine("***ERROR: Please enter number 1, 2, or 3 !!!");
+                                      Thread.Sleep(2000);
+                                      Console.Clear();
+                                  });
+                switch (num)
+                {
                 case 1:
-                    long numSpins;
-                    int paylines; // number of paylines to play
-                    
-                    labelNumSpins:
-                    Console.Write("\nEnter the number of spins:  ");
-                    try
-                    {
-                        numSpins = Convert.ToInt64(Console.ReadLine()); // convert to a long
-                        if (numSpins <= 0)
-                            throw new ArgumentOutOfRangeException();
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("\n***ERROR: Please enter a positive number greater than 0 !!!");
-                        goto labelNumSpins;
-                    }
-
-                    labelActivePaylines:
-                    Console.Write("Enter the number of active paylines (1 through 15):  ");
-
-                    try
-                    {
-                        paylines = Convert.ToInt32(Console.ReadLine()); // convert to an int
-
-                        if (paylines < 1 || paylines > 15)
-                            throw new ArgumentOutOfRangeException();
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("\n***ERROR: Please enter a positive number between 1 and 15 !!!");
-                        goto labelActivePaylines;
-                    }
-
-                    Console.Clear();
-                    BulkGameSpins(numSpins,paylines);
-                    Console.WriteLine("Press any key to continue to Main Menu ...");
-                    Console.ReadKey();
-                    goto mainMenu;
-                case 2:
-                    Console.Clear();
-                    IndividualGames();
-                    goto mainMenu;
-                case 3:
-                    Environment.Exit(0); // planned exit
+                    RunBulkGameSpins();
                     break;
-                default:
-                    goto mainMenu;
-            }
 
-        } // End method Main
+                case 2:
+                    IndividualGames();
+                    break;
+                }
+            } while (num != 3);
+        }
 
         private static void BulkGameSpins(long numSpins, int numPayLines)
         {
@@ -141,9 +150,9 @@ namespace Lobstermania
                 printPaylines = true
             };
 
-            for (; ;) // ever
+            while (true)
             {
-                Console.Clear(); // clear the console screen
+                Console.Clear();
                 Console.WriteLine("\nPlaying {0} active paylines.\n", game.activePaylines);
 
                 game.Spin();
@@ -155,33 +164,17 @@ namespace Lobstermania
                 Console.WriteLine("\nPress any other key to continue playing.");
                 ConsoleKeyInfo cki = Console.ReadKey(true);
 
-                if (cki.KeyChar == 'p')
+                if (cki.KeyChar == 'p' || cki.KeyChar == 'P')
                 {
-                getPayLines:
-                    Console.Write("\nEnter the new number of active paylines (1 through 15):  ");
-                    int paylines;
-                    try
-                    {
-                        paylines = Convert.ToInt32(Console.ReadLine()); // convert to an int
+                    game.activePaylines = GetIntValue("\nEnter the new number of active paylines (1 through 15): ",
+                                                      1, 15,
+                                                      () => Console.WriteLine("\n***ERROR: Please enter a positive number between 1 and 15 !!!"));
+                }
 
-                        if (paylines < 1 || paylines > 15)
-                            throw new ArgumentOutOfRangeException();
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("\n***ERROR: Please enter a positive number between 1 and 15 !!!");
-                        goto getPayLines;
-                    }
-                    
-                    game.activePaylines = paylines;
-
-                } // end if cki.KeyChar == 'p'
-
-                if (cki.Key == ConsoleKey.Escape) // quit when you hit the escape key
+                if (cki.Key == ConsoleKey.Escape)
                     break;
-            }  // end for ever
-
-        } // End method IndividualGames
+            }
+        }
 
     } // End class Program
 
