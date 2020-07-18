@@ -8,7 +8,7 @@ namespace Lobstermania
         const int GAMEBOARD_ROWS = 3;
         const int MAX_PAYLINES = 15; 
 
-        enum Symbols { WS, LM, BU, BO, LH, TU, CL, SG, SF, LO, LT }; // All 11 game symbols
+        enum Symbols : byte { WS, LM, BU, BO, LH, TU, CL, SG, SF, LO, LT }; // All 11 game symbols
         const int DISTINCT_SYMBOLS = 11;
 
         readonly int[][] SYMBOL_COUNTS = new int[][]
