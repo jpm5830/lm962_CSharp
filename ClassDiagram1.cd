@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Lobstermania.Bonus">
+    <Position X="11.25" Y="0.5" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQAAAAISBIAAAAAAAABAAAAAAAAoAAAAAAQAA=</HashCode>
+      <FileName>Bonus.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Lobstermania.LM962">
+    <Position X="6.75" Y="0.5" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Enum Name="Lobstermania.LM962.Symbol" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>LM962.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAGgAIAYAABARAZAAACAQIEAAAAAQgASSAQAAAIACBA=</HashCode>
+      <FileName>LM962.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Lobstermania.Program">
+    <Position X="3.25" Y="0.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAABCAAAAAACAAAAAAAAAAAAAABAABAAABAA=</HashCode>
+      <FileName>Program.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Lobstermania.ArrayShuffle">
+    <Position X="13.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAA=</HashCode>
+      <FileName>Shuffle.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Lobstermania.Stats">
+    <Position X="0.5" Y="0.5" Width="1.75" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Properties" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>UCAAEACAQ0EAIIAQBABAAAAAwAA9IEAAAAEoIEAABAA=</HashCode>
+      <FileName>Stats.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

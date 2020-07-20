@@ -6,9 +6,12 @@ namespace Lobstermania
 {
     public static class Program
     {
+
+        // METHODS
+
         // IMPORTANT NUMBERS
         // -----------------
-        // Theoretical spins per JACKPOT 8,107,500
+        // Theoretical _spins per JACKPOT 8,107,500
         // Number of all slot combinations (47x46x48x50x50 -- 1 slot per reel) = 259,440,000
         // Number of all possible symbol combinations on a line (11x11x11x10x10) = 133,100
 
@@ -59,7 +62,8 @@ namespace Lobstermania
             sb.AppendLine();
             sb.AppendLine("\t1 for Bulk Game Spins");
             sb.AppendLine("\t2 for Individual Games");
-            sb.AppendLine("\t3 to quit");
+            sb.AppendLine("\t3 for Absolute Game Metrics");
+            sb.AppendLine("\t4 to quit");
             sb.AppendLine();
             sb.Append("Your choice: ");
             return sb.ToString();
@@ -74,39 +78,58 @@ namespace Lobstermania
                 Console.Clear();
 
                 num = GetIntValue(prompt: menu,
-                                  min: 1, max: 3,
+                                  min: 1, max: 4,
                                   onError: () =>
                                   {
-                                      Console.WriteLine("***ERROR: Please enter number 1, 2, or 3 !!!");
+                                      Console.WriteLine("***ERROR: Please enter number 1, 2, 3, or 4 !!!");
                                       Thread.Sleep(2000);
                                       Console.Clear();
                                   });
                 switch (num)
                 {
-                case 1:
-                    RunBulkGameSpins();
-                    break;
+                    case 1:
+                        RunBulkGameSpins();
+                        break;
 
-                case 2:
-                    IndividualGames();
-                    break;
+                    case 2:
+                        IndividualGames();
+                        break;
+                    case 3:
+                        TestMetrics();
+                        break;
+
                 }
-            } while (num != 3);
+            } while (num != 4);
         }
+
+        private static void TestMetrics()
+        {
+            DateTime start_t = DateTime.Now;
+            LM962 game = new LM962();
+
+            game.TestMetrics();
+
+            DateTime end_t = DateTime.Now;
+            TimeSpan runtime = end_t - start_t;
+            Console.WriteLine("\nRun completed in {0:t}\n", runtime);
+            Console.WriteLine("Press any key to continue to Main Menu ...");
+            Console.ReadKey();
+
+        } // End method TestMetrics
 
         private static void BulkGameSpins(long numSpins, int numPayLines)
         {
             LM962 game = new LM962()
             {
-                activePaylines = numPayLines
+                ActivePaylines = numPayLines
             };
 
             DateTime start_t = DateTime.Now;
 
-            Console.WriteLine("Progress Bar ({0:N0} spins)\n",numSpins);
+            Console.WriteLine("\nPlaying {0} active paylines.\n", game.ActivePaylines);
+            Console.WriteLine("Progress Bar ({0:N0} spins)\n", numSpins);
             Console.WriteLine("10%       100%");
             Console.WriteLine("|---+----|");
-
 
             if (numSpins <= 10)
             {
@@ -117,7 +140,7 @@ namespace Lobstermania
             else
             {
                 int marks = 1; // Number of printed marks
-                long markerEvery = (long)Math.Ceiling((double)numSpins / (double)10); // print progression marker at every 1/10th of total spins.
+                long markerEvery = (long)Math.Ceiling((double)numSpins / (double)10); // print progression marker at every 1/10th of total _spins.
 
                 for (long i = 1; i <= numSpins; i++)
                 {
@@ -134,7 +157,7 @@ namespace Lobstermania
             }
 
             Console.WriteLine();
-            game.stats.DisplaySessionStats(numPayLines);
+            game.Stats.DisplaySessionStats(numPayLines);
 
             DateTime end_t = DateTime.Now;
             TimeSpan runtime = end_t - start_t;
@@ -146,18 +169,18 @@ namespace Lobstermania
         {
             LM962 game = new LM962
             {
-                printGameboard = true,
-                printPaylines = true
+                PrintGameboard = true,
+                PrintPaylines = true
             };
 
             while (true)
             {
                 Console.Clear();
-                Console.WriteLine("\nPlaying {0} active paylines.\n", game.activePaylines);
+                Console.WriteLine("\nPlaying {0} active paylines.\n", game.ActivePaylines);
 
                 game.Spin();
-                game.stats.DisplayGameStats ();
-                game.stats.ResetGameStats();
+                game.Stats.DisplayGameStats();
+                game.Stats.ResetGameStats();
 
                 Console.WriteLine("Press the P key to change the number of pay lines");
                 Console.WriteLine("Press the Escape key to return to the Main Menu");
@@ -166,7 +189,7 @@ namespace Lobstermania
 
                 if (cki.KeyChar == 'p' || cki.KeyChar == 'P')
                 {
-                    game.activePaylines = GetIntValue("\nEnter the new number of active paylines (1 through 15): ",
+                    game.ActivePaylines = GetIntValue("\nEnter the new number of active paylines (1 through 15): ",
                                                       1, 15,
                                                       () => Console.WriteLine("\n***ERROR: Please enter a positive number between 1 and 15 !!!"));
                 }
