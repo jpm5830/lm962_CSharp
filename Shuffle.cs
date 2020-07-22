@@ -6,7 +6,7 @@ namespace Lobstermania
     {
         public static void Shuffle<T>(T[] items)
         {
-            Random rand = LM962.rand;
+            Random rand = LM962.Rand;
 
             // For each spot in the array, pick
             // a random item to swap into that spot.

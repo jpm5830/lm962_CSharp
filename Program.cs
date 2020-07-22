@@ -111,7 +111,7 @@ namespace Lobstermania
 
             DateTime end_t = DateTime.Now;
             TimeSpan runtime = end_t - start_t;
-            Console.WriteLine("\nRun completed in {0:t}\n", runtime);
+            Console.WriteLine("\nTest Metrics completed in {0:t}\n", runtime);
             Console.WriteLine("Press any key to continue to Main Menu ...");
             Console.ReadKey();
 

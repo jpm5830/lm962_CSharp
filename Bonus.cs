@@ -12,7 +12,7 @@ namespace Lobstermania
         private readonly static int[] _prizeLookupTable = new int[NUM_PRIZE_SLOTS];
         private static int _bouysPicked = 0; // will be either 2, 3, or 4
         private static int _prizesPerBuoy = 0; // will be either 2 or 3
-        private readonly static int[] _prizes = new int[MAX_PRIZES]; // each individual prize amount, array will be right sized
+        private readonly static int[] _prizes = new int[MAX_PRIZES]; // each individual prize amount
         private static int _bonusWin = 0;
         private static bool _isInitialized = false;
 
@@ -53,8 +53,8 @@ namespace Lobstermania
             if (!_isInitialized)
                 Initialize(); // Build the _prizeLookupTable
 
-            _bouysPicked = LM962.rand.Next(2, 5); // 2, 3, or 4
-            _prizesPerBuoy = LM962.rand.Next(2, 4); // 2 or 3
+            _bouysPicked = LM962.Rand.Next(2, 5); // 2, 3, or 4
+            _prizesPerBuoy = LM962.Rand.Next(2, 4); // 2 or 3
             int numPrizes = _bouysPicked * _prizesPerBuoy;
 
             // Set all elements of the _prizes array to 0
@@ -64,7 +64,7 @@ namespace Lobstermania
             _bonusWin = 0;
             for (int i = 0; i < numPrizes; i++)
             {
-                int idx = LM962.rand.Next(322); // indexes between 0 and 321 inclusive
+                int idx = LM962.Rand.Next(322); // indexes between 0 and 321 inclusive
                 _prizes[i] = _prizeLookupTable[idx];
                 _bonusWin += _prizes[i];
             }
