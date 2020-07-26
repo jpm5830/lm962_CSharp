@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Lobstermania
 {
@@ -31,9 +32,8 @@ namespace Lobstermania
             { 10000, 1000, 500, 500, 500, 250, 200, 200, 150, 0, 200 }
         };
 
-        private int _seed = 390992625;
+        private int _seed = Environment.TickCount;
         public static Random Rand = new Random(); // Random Number Generator (RNG) object
-        private bool _testMetricsRunning = false;
 
         private readonly Symbol[][] _reels = new Symbol[NUM_REELS][] // 5 _reels in this game
         {
@@ -47,7 +47,7 @@ namespace Lobstermania
         private readonly Symbol[][] _payLines = new Symbol[MAX_PAYLINES][];
         private int _activePaylines = MAX_PAYLINES; //number of active paylines, default of 15
 
-        private readonly bool _useFixedReelLayout = true;
+        private readonly bool _useFixedReelLayout = false;
         
         private double _paybackPercent = 0.0;
         private double _hitFreq = 0.0;
@@ -56,6 +56,10 @@ namespace Lobstermania
         private bool _printReels = false;
         private bool _printGameboard = false;
         private bool _printPaylines = false;
+
+        // Other flags
+        private bool _testHitMetricsRunning = false; // Only used for testing line hit frequency, false is normal run
+        private bool _testPaybackMetricsRunning = false; // Only used for testing payback %, false is for normal run
 
         private Stats _stats = new Stats(); // Game statistics object
 
@@ -96,17 +100,22 @@ namespace Lobstermania
 
         } // End constructor
 
-        private void CalibrateGame()
+        public void CalibrateGame()
         {
             DateTime start_t = DateTime.Now;
 
             do
             {
-                //_seed = Environment.TickCount;
-                //Rand = new Random(_seed);
+                _seed = Environment.TickCount;
+                Rand = new Random(_seed);
+
+                // Randomize the _reels
+                for (int i = 0; i < NUM_REELS; i++) // randomize each of the 5 _reels
+                    ArrayShuffle.Shuffle(_reels[i]);
+
 
                 TestMetrics();
-            } while (!((Math.Round(_paybackPercent, 3) == 0.962) && (Math.Round(_hitFreq, 3) == 0.052)));
+            } while (!((_paybackPercent == 0.962) && (_hitFreq == 0.052)));
 
             DateTime end_t = DateTime.Now;
             TimeSpan runtime = end_t - start_t;
@@ -219,10 +228,11 @@ namespace Lobstermania
 
                     if (count == 3)
                     {
-                        if (_testMetricsRunning)
-                            bonusWin = 330;
+                        if (_testPaybackMetricsRunning)
+                            bonusWin = 331; // Average bonus win
                         else
                         {
+                            // Use random bonus win
                             bonusWin = Bonus.GetPrizes();
                             Stats.BonusWinCount++;
                             Stats.BonusWinCredits += bonusWin;
@@ -231,11 +241,11 @@ namespace Lobstermania
                     }
                     else
                         bonusWin = 0;
-
+                    
                     break; // case Symbol.LO
 
                 case Symbol.LT: // Scatter
-                    count = 1; // Scatter handled at gameboard level
+                    count = 1; // Scatter handled at gameboard level, no win here
                     break; // case "LT"
 
                 case Symbol.WS: // Wild
@@ -493,15 +503,16 @@ namespace Lobstermania
         public void TestMetrics()
         {
             long payBack = 0L;
-            long win;
+            long win = 0L;
             long hits = 0L; ;
             long creditsSpent = 0L;
+            byte scatterCount; // count of scatter on a gameboard or a payline
             Symbol[] payline = new Symbol[5];
             byte[] slotIdxs = new byte[5];
             float percentComplete = 0.0f;
             
-            _testMetricsRunning = true;
-            Console.Clear();
+            _testPaybackMetricsRunning = true; // Will use a fixed average bonus win of 331 credits
+            //Console.Clear();
             Console.WriteLine("This function returns the absolute (deterministic) payback and hit rate percentages.\n");
             Console.WriteLine("Running game metrics, (this might take a while) ...\n");
 
@@ -533,98 +544,209 @@ namespace Lobstermania
                                 {
                                     percentComplete += 0.1f;
                                     Console.Write("{0:P0}   ", percentComplete);
+                                    Console.Out.Flush();
                                 }
 
-                                win = GetLinePayout(payline);
-
-                                // Scatter wins will never return a win from GetLinePayout()
-                                // Bonus wins are accounted for in GetLinePayout()
-                                if (win > 0)
-                                {
-                                    hits++;
-                                    payBack += win;
-                                }
 
                                 // Get scatter wins 
                                 // Scatter wins are a board level win, and the gameboard will change with each new line
                                 // in this test. This checks for scatter wins across the virtual gameboard.
 
-                                byte scatterCount = 0;
-                                byte i1, i2, i3;
-                                byte r = 0; // reel number 1-5 zero adjusted
-
-                                foreach (byte slotIdx in slotIdxs)
+                                if (!_testHitMetricsRunning) 
+                                // Then account for Scatter Wins at gameboard level)
+                                // The code below will check for scatter wins using a virtual gameboard
                                 {
-                                    // set i1,i2, i3 to consecutive slot numbers on this reel, wrap if needed
-                                    i1 = slotIdx;
+                                    scatterCount = 0;
+                                    byte i1, i2, i3;
+                                    byte r = 0; // reel number 1-5 zero adjusted
 
-                                    // set i2, correct if past last slot in reel
-                                    if ((byte)(i1 + 1) < _reels[r].Length)
-                                        i2 = (byte)(i1 + 1);
-                                    else
-                                        i2 = 0;
+                                    foreach (byte slotIdx in slotIdxs)
+                                    {
+                                        // set i1,i2, i3 to consecutive slot numbers on this reel, wrap if needed
+                                        i1 = slotIdx;
 
-                                    // set i3, correct if past last slot in reel
-                                    if ((byte)(i2 + 1) < _reels[r].Length)
-                                        i3 = (byte)(i2 + 1);
-                                    else
-                                        i3 = 0;
+                                        // set i2, correct if past last slot in reel
+                                        if ((byte)(i1 + 1) < _reels[r].Length)
+                                            i2 = (byte)(i1 + 1);
+                                        else
+                                            i2 = 0;
+
+                                        // set i3, correct if past last slot in reel
+                                        if ((byte)(i2 + 1) < _reels[r].Length)
+                                            i3 = (byte)(i2 + 1);
+                                        else
+                                            i3 = 0;
 
 
-                                    // i1, i2, i3 are now set to consecutive slots (reel indexes) on this reel (r)
-                                    // Count 1 scatter symbol per reel
-                                    switch (r)
+                                        // i1, i2, i3 are now set to consecutive slots (reel indexes) on this reel (r)
+                                        // Count 1 scatter symbol per reel
+                                        switch (r)
+                                        {
+                                            case 0:
+                                                if (_reels[0][i1].Equals(Symbol.LT) || _reels[0][i2].Equals(Symbol.LT) || _reels[0][i3].Equals(Symbol.LT)) scatterCount++;
+                                                break;
+                                            case 1:
+                                                if (_reels[1][i1].Equals(Symbol.LT) || _reels[1][i2].Equals(Symbol.LT) || _reels[1][i3].Equals(Symbol.LT)) scatterCount++;
+                                                break;
+                                            case 2:
+                                                if (_reels[2][i1].Equals(Symbol.LT) || _reels[2][i2].Equals(Symbol.LT) || _reels[2][i3].Equals(Symbol.LT)) scatterCount++;
+                                                break;
+                                            case 3:
+                                                if (_reels[3][i1].Equals(Symbol.LT) || _reels[3][i2].Equals(Symbol.LT) || _reels[3][i3].Equals(Symbol.LT)) scatterCount++;
+                                                break;
+                                            case 4:
+                                                if (_reels[4][i1].Equals(Symbol.LT) || _reels[4][i2].Equals(Symbol.LT) || _reels[4][i3].Equals(Symbol.LT)) scatterCount++;
+                                                break;
+                                        } // end switch (r)
+
+                                        r++; // next reel
+                                    } // end foreach (byte slotIdx in slotIdxs)
+
+                                    // Add in scatter win payouts 
+                                    switch (scatterCount)
                                     {
                                         case 0:
-                                            if (_reels[0][i1].Equals(Symbol.LT) || _reels[0][i2].Equals(Symbol.LT) || _reels[0][i3].Equals(Symbol.LT)) scatterCount++;
-                                            break;
                                         case 1:
-                                            if (_reels[1][i1].Equals(Symbol.LT) || _reels[1][i2].Equals(Symbol.LT) || _reels[1][i3].Equals(Symbol.LT)) scatterCount++;
-                                            break;
                                         case 2:
-                                            if (_reels[2][i1].Equals(Symbol.LT) || _reels[2][i2].Equals(Symbol.LT) || _reels[2][i3].Equals(Symbol.LT)) scatterCount++;
+                                            win = 0;
                                             break;
                                         case 3:
-                                            if (_reels[3][i1].Equals(Symbol.LT) || _reels[3][i2].Equals(Symbol.LT) || _reels[3][i3].Equals(Symbol.LT)) scatterCount++;
+                                            win = 5;
                                             break;
                                         case 4:
-                                            if (_reels[4][i1].Equals(Symbol.LT) || _reels[4][i2].Equals(Symbol.LT) || _reels[4][i3].Equals(Symbol.LT)) scatterCount++;
+                                            win = 25;
                                             break;
-                                    } // end switch (r)
+                                        case 5:
+                                            win = 200;
+                                            break;
+                                    }
 
-                                    r++; // next reel
-                                } // end foreach (byte slotIdx in slotIdxs)
+                                    win += GetLinePayout(payline);
 
-                                // Add in scatter win payouts 
-                                switch (scatterCount)
+                                    // GetLinePayout() does not return anything for scatters 
+                                    // Bonus wins are accounted for in GetLinePayout()
+                                    if (win > 0)
+                                    {
+                                        hits++;
+                                        payBack += win;
+                                    }
+
+                                } // if(!_testHitMetricsRunning)
+                            } // End s5Idx block
+            
+            _paybackPercent = Math.Round((double)payBack / (double)creditsSpent, 3);
+            _hitFreq = Math.Round((double)hits / (double)creditsSpent,3);
+            
+            PrintAllReels();
+            Console.WriteLine("\nSeed: {0:N0}  Payback%: {1:P2}  Hit Freq: {2:P2}  Hits: {3:N0}  Credits Won: {4:N0},  Spins: {5:N0}",
+                _seed, _paybackPercent, _hitFreq, hits, payBack, creditsSpent);
+
+            _testPaybackMetricsRunning = false;
+
+
+            // Now calculate the line hit frequency
+            // This is calculated as the % of hits (any win > 0)
+            // over all possible payLines
+            // The nested loops will run 11x11x11x10x10 = 133,100 times.
+            _testPaybackMetricsRunning = true;
+            int spins = 0;
+            hits = 0L;
+            string[] tempLine = new string[NUM_REELS];
+            StreamWriter writer = new StreamWriter("paylines.txt");
+
+            foreach (string s1 in Enum.GetNames(typeof(Symbol)))
+                foreach (string s2 in Enum.GetNames(typeof(Symbol)))
+                    foreach (string s3 in Enum.GetNames(typeof(Symbol)))
+                        foreach (string s4 in Enum.GetNames(typeof(Symbol)))
+                        {
+                            if (s4 == "LO")
+                                continue; // No bonus symbol on this reel
+                            foreach (string s5 in Enum.GetNames(typeof(Symbol)))
+                            {
+                                if (s5 == "LO")
+                                    continue; // No bonus symbol on this reel
+                                win = 0L;
+                                scatterCount = 0;
+
+                                spins++;
+                                tempLine[0] = s1;
+                                tempLine[1] = s2;
+                                tempLine[2] = s3;
+                                tempLine[3] = s4;
+                                tempLine[4] = s5;
+                                for (int i = 0; i < NUM_REELS; i++)
                                 {
-                                    case 0:
-                                    case 1:
-                                    case 2:
-                                        break;
-                                    case 3:
-                                        hits++;
-                                        payBack += 5;
-                                        break;
-                                    case 4:
-                                        hits++;
-                                        payBack += 25;
-                                        break;
-                                    case 5:
-                                        hits++;
-                                        payBack += 200;
-                                        break;
+                                    switch(tempLine[i])
+                                    {
+                                        case "WS":
+                                            payline[i] = Symbol.WS;
+                                            break;
+                                        case "LM":
+                                            payline[i] = Symbol.LM;
+                                            break;
+                                        case "BU":
+                                            payline[i] = Symbol.BU;
+                                            break;
+                                        case "BO":
+                                            payline[i] = Symbol.BO;
+                                            break;
+                                        case "LH":
+                                            payline[i] = Symbol.LH;
+                                            break;
+                                        case "TU":
+                                            payline[i] = Symbol.TU;
+                                            break;
+                                        case "CL":
+                                            payline[i] = Symbol.CL;
+                                            break;
+                                        case "SG":
+                                            payline[i] = Symbol.SG;
+                                            break;
+                                        case "SF":
+                                            payline[i] = Symbol.SF;
+                                            break;
+                                        case "LO":
+                                            payline[i] = Symbol.LO;
+                                            break;
+                                        case "LT":
+                                            payline[i] = Symbol.LT;
+                                            break;
+                                    }
                                 }
 
-                            } // End s5Idx block
-            PrintAllReels();
-            _paybackPercent = (double)payBack / (double)creditsSpent;
-            _hitFreq = (double)hits / (double)creditsSpent;
-            
-            //Console.WriteLine("\nSEED: {0}", _seed);
-            Console.WriteLine("\n\nSpins: {0:N0}   Credits Won: {1:N0}   Hits: {2:N0}   Payback%: {3:P1}   Hit Frequency%: {4:P1}\n", 
-                creditsSpent, payBack, hits, _paybackPercent, _hitFreq);
-            _testMetricsRunning = false;
+
+                                // Now check for Scatter wins on payline
+                                foreach (string s in tempLine)
+                                    if (s == "LT") 
+                                        scatterCount++;
+                                
+                                if (scatterCount > 2)
+                                {
+                                    if (scatterCount == 3) win = 5;
+                                    if (scatterCount == 4) win = 25;
+                                    if (scatterCount == 5) win = 200;
+                                }
+                                else
+                                    win = GetLinePayout(payline);
+
+                                if (win > 0)
+                                {
+                                    hits++;
+                                    writer.Write("\nPayline[{0}]: [ ", spins);
+                                    for (int i = 0; i < NUM_REELS - 1; i++)
+                                        writer.Write("{0}, ", payline[i].ToString());
+                                    writer.WriteLine("{0} ] PAYOUT => {1}", payline[NUM_REELS - 1].ToString(), win);
+                                }
+
+                            } // foreach string s5
+                        } // foreach string s4
+
+            writer.Close();
+            _hitFreq = Math.Round((double)hits / (double)spins, 3);
+            _testHitMetricsRunning = false; // Reset flag to normal
+
+            Console.WriteLine("\nHit Freq: {0:P2}  Hits: {1:N0}  Spins: {2:N0}",
+                _hitFreq, hits, spins);
         } // End method TestMetrics
 
     } // End class LM962
