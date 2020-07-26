@@ -107,7 +107,7 @@ namespace Lobstermania
             DateTime start_t = DateTime.Now;
             LM962 game = new LM962();
 
-            game.TestMetrics();
+            game.CalibrateGame();
 
             DateTime end_t = DateTime.Now;
             TimeSpan runtime = end_t - start_t;
