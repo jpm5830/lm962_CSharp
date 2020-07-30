@@ -104,16 +104,39 @@ namespace Lobstermania
 
         private static void TestMetrics()
         {
-            DateTime start_t = DateTime.Now;
-            LM962 game = new LM962();
+            int count = 0;
+            LM962 game2;
+            double[] hitPcts = new double[1];
+            double[] paybackPcts = new double[1];
 
-            game.CalibrateGame();
+            do
+            {
+                LM962 game = new LM962()
+                {
+                    UseFixedReelLayout = false,
+                    PrintReels = true
+                };
+                Console.WriteLine("Running Session {0}...", count);
+                game.TestMetrics();
+                game2 = game;
+                hitPcts[count] = game.HitFreq;
+                paybackPcts[count] = game.PaybackPercent;
+                count++;
+                //} while (!((game2.PaybackPercent == 0.962 || game2.PaybackPercent == 0.963) && (game2.HitFreq == 0.052)));
+            } while (count < 1);
 
-            DateTime end_t = DateTime.Now;
-            TimeSpan runtime = end_t - start_t;
-            Console.WriteLine("\nTest Metrics completed in {0:t}\n", runtime);
-            Console.WriteLine("Press any key to continue to Main Menu ...");
-            Console.ReadKey();
+            Console.Write("Hit Freqs: [  ");
+            for (int i = 0; i < 59; i++)
+                Console.Write("{0:P3},", hitPcts);
+            Console.WriteLine("{0:P3}  ]\n", hitPcts);
+
+            Console.Write("Payback%: [  ");
+            for (int i = 0; i < 59; i++)
+                Console.Write("{0:P3},", paybackPcts);
+            Console.WriteLine("{0:P3}  ]\n", paybackPcts);
+           
+            Console.WriteLine("Press Enter to continue to Main Menu ...");
+            Console.ReadLine();
 
         } // End method TestMetrics
 
