@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace Lobstermania
 {
-    class LM962
+    public class LM962
     {
         // CONSTANTS
         private const int NUM_REELS = 5;
@@ -12,7 +14,7 @@ namespace Lobstermania
         private const int MAX_PAYLINES = 15;
         private const int DISTINCT_SYMBOLS = 11;
 
-        private enum Symbol { WS, LM, BU, BO, LH, TU, CL, SG, SF, LO, LT }; // All 11 game symbols
+        public enum Symbol { WS, LM, BU, BO, LH, TU, CL, SG, SF, LO, LT }; // All 11 game symbols
 
         // FIELDS
         private readonly int[][] _symbolCounts = new int[][]
@@ -33,8 +35,8 @@ namespace Lobstermania
             { 10000, 1000, 500, 500, 500, 250, 200, 200, 150, 0, 200 }
         };
 
-        private static int _seed = Environment.TickCount;
-        //private static int _seed = 931375296;
+        //private static int _seed = Environment.TickCount;
+        private static int _seed = 1;
         public static Random Rand = new Random(_seed); // Random Number Generator (RNG) object
 
         private static Symbol[][] _reels = new Symbol[NUM_REELS][] // 5 _reels in this game
@@ -78,7 +80,6 @@ namespace Lobstermania
             // This will initialize all reels with the correct number of symbols,
             // and then randomize them on each reel (change each reel layout randomly)
             BuildReels();
-            PrintAllReels();
             // Randomize the _reels (1st use of Random()
             //for (int i = 0; i < NUM_REELS; i++) // randomize each of the 5 _reels
             //    Rand.Shuffle(_reels[i]);
@@ -125,9 +126,12 @@ namespace Lobstermania
             for (int num = 0; num < NUM_REELS; num++) // all 5 _reels
             {
                 Console.Write("\nReel[{0}]: [  ", num);
+                //Console.Write(string.Join(", ", _reels[num]));
                 for (int s = 0; s < _reels[num].Length - 1; s++)
-                    Console.Write("\"{0}\", ", _reels[num][s].ToString());
-                Console.WriteLine("\"{0}\"  ];", (_reels[num][_reels[num].Length - 2]).ToString());
+                    Console.Write("\"{0}\", ", _reels[num][s]);
+                Console.WriteLine("\"{0}\"  ];", (_reels[num][_reels[num].Length - 1]));
+                
+                //Console.WriteLine("  ]\n");
             }
             Console.WriteLine();
         } // End method PrintAllReels
@@ -484,14 +488,13 @@ namespace Lobstermania
 
             // Randomize the _reels (1st use of Random()
             for (int i = 0; i < NUM_REELS; i++) // randomize each of the 5 _reels
-                RandomExtensions.Shuffle(Rand, _reels[i]);
+                ArrayShuffle.Shuffle(_reels[i]);
 
             if (UseFixedReelLayout)
                 SetFixedReels();
             
             if(PrintReels)
                 PrintAllReels();
-            Environment.Exit(0);
 
             // Payback %
             // 259,440,000 combinations (47x46x48x50x50)
