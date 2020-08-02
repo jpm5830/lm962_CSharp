@@ -48,13 +48,13 @@ namespace Lobstermania
             _isInitialized = true;
         }
 
-        public static int GetPrizes()
+        public static int GetPrizes(Random rng) // Random Number Generator from LM962 object
         {
             if (!_isInitialized)
                 Initialize(); // Build the _prizeLookupTable
 
-            _bouysPicked = LM962.Rand.Next(2, 5); // 2, 3, or 4
-            _prizesPerBuoy = LM962.Rand.Next(2, 4); // 2 or 3
+            _bouysPicked = rng.Next(2, 5); // 2, 3, or 4
+            _prizesPerBuoy = rng.Next(2, 4); // 2 or 3
             int numPrizes = _bouysPicked * _prizesPerBuoy;
 
             // Set all elements of the _prizes array to 0
@@ -64,7 +64,7 @@ namespace Lobstermania
             _bonusWin = 0;
             for (int i = 0; i < numPrizes; i++)
             {
-                int idx = LM962.Rand.Next(322); // indexes between 0 and 321 inclusive
+                int idx = rng.Next(322); // indexes between 0 and 321 inclusive
                 _prizes[i] = _prizeLookupTable[idx];
                 _bonusWin += _prizes[i];
             }

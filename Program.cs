@@ -82,9 +82,10 @@ namespace Lobstermania
                                   onError: () =>
                                   {
                                       Console.WriteLine("***ERROR: Please enter number 1, 2, 3, or 4 !!!");
-                                      Thread.Sleep(2000);
+                                      Thread.Sleep(1500);
                                       Console.Clear();
                                   });
+                Console.Clear();
                 switch (num)
                 {
                     case 1:
@@ -104,38 +105,25 @@ namespace Lobstermania
 
         private static void TestMetrics()
         {
-            int count = 0;
-            LM962 game2;
-            double[] hitPcts = new double[1];
-            double[] paybackPcts = new double[1];
-
+            int count = 1;
             do
             {
+
                 LM962 game = new LM962()
                 {
-                    UseFixedReelLayout = false,
-                    PrintReels = true
+                    // All properties relevant to LM962.TestMetrics() -- set to default values
+                    PrintReels = false,
+                    PrintPaylines = false, // will write to a text file paylines.txt if true
+                    UseRandomReelLayout = false // if true, use fixed reels with 96.25% payback, 5.15% hit frequency
                 };
-                Console.WriteLine("Running Session {0}...", count);
+
+                Console.WriteLine("\nRunning Session {0} game metrics ...\n", count);
                 game.TestMetrics();
-                game2 = game;
-                hitPcts[count] = game.HitFreq;
-                paybackPcts[count] = game.PaybackPercent;
                 count++;
-                //} while (!((game2.PaybackPercent == 0.962 || game2.PaybackPercent == 0.963) && (game2.HitFreq == 0.052)));
-            } while (count < 1);
+            
+            } while (count <= 1);
 
-            Console.Write("Hit Freqs: [  ");
-            for (int i = 0; i < 59; i++)
-                Console.Write("{0:P3},", hitPcts);
-            Console.WriteLine("{0:P3}  ]\n", hitPcts);
-
-            Console.Write("Payback%: [  ");
-            for (int i = 0; i < 59; i++)
-                Console.Write("{0:P3},", paybackPcts);
-            Console.WriteLine("{0:P3}  ]\n", paybackPcts);
-           
-            Console.WriteLine("Press Enter to continue to Main Menu ...");
+            Console.Write("\nPress Enter to continue to Main Menu...");
             Console.ReadLine();
 
         } // End method TestMetrics

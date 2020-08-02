@@ -35,11 +35,11 @@ namespace Lobstermania
             { 10000, 1000, 500, 500, 500, 250, 200, 200, 150, 0, 200 }
         };
 
-        //private static int _seed = Environment.TickCount;
-        private static int _seed = 1;
-        public static Random Rand = new Random(_seed); // Random Number Generator (RNG) object
+        // The following 2 fields are set in the constructor
+        private readonly int _seed;
+        private static Random _rand; // Random Number Generator (RNG) object
 
-        private static Symbol[][] _reels = new Symbol[NUM_REELS][] // 5 _reels in this game
+        private readonly Symbol[][] _reels = new Symbol[NUM_REELS][] // 5 _reels in this game
         {
             new Symbol[47],
             new Symbol[46],
@@ -49,29 +49,16 @@ namespace Lobstermania
         };
         private readonly Symbol[,] _gameBoard = new Symbol[GAMEBOARD_ROWS, NUM_REELS];
         private readonly Symbol[][] _payLines = new Symbol[MAX_PAYLINES][];
-        private int _activePaylines = MAX_PAYLINES; //number of active paylines, default of 15
-
-        private bool _useFixedReelLayout = false;
-
-        private double _paybackPercent = 0.0;
-        private double _hitFreq = 0.0;
-
-        // Print flags
-        private bool _printReels = false;
-        private bool _printGameboard = false;
-        private bool _printPaylines = false;
-
-        private Stats _stats = new Stats(); // Game statistics object
 
         //PROPERTIES
-        public int ActivePaylines { get => _activePaylines; set => _activePaylines = value; }
-        public bool PrintReels { get => _printReels; set => _printReels = value; }
-        public bool PrintGameboard { get => _printGameboard; set => _printGameboard = value; }
-        public bool PrintPaylines { get => _printPaylines; set => _printPaylines = value; }
-        public Stats Stats { get => _stats; private set => _stats = value; }
-        public double PaybackPercent { get => _paybackPercent; private set => _paybackPercent = value; }
-        public double HitFreq { get => _hitFreq; private set => _hitFreq = value; }
-        public bool UseFixedReelLayout { get => _useFixedReelLayout; set => _useFixedReelLayout = value; }
+        public int ActivePaylines { get; set; } = MAX_PAYLINES;
+        public bool PrintReels { get; set; } = false;
+        public bool PrintGameboard { get; set; } = false;
+        public bool PrintPaylines { get; set; } = false;
+        public Stats Stats { get; private set; } = new Stats();
+        public double PaybackPercent { get; private set; } = 0.0;
+        public double HitFreq { get; private set; } = 0.0;
+        public bool UseRandomReelLayout { get; set; } = false;
 
         // METHODS
         public LM962()
@@ -80,9 +67,13 @@ namespace Lobstermania
             // This will initialize all reels with the correct number of symbols,
             // and then randomize them on each reel (change each reel layout randomly)
             BuildReels();
+
+            _seed = Environment.TickCount;
+            _rand = new Random(_seed);
+
             // Randomize the _reels (1st use of Random()
-            //for (int i = 0; i < NUM_REELS; i++) // randomize each of the 5 _reels
-            //    Rand.Shuffle(_reels[i]);
+            for (int i = 0; i < NUM_REELS; i++) // randomize each of the 5 _reels
+                Shuffle(_reels[i]);
 
         } // End constructor
 
@@ -103,35 +94,49 @@ namespace Lobstermania
 
         private void SetFixedReels()
         {
-            // Spins: 259,440,000   Credits Won: 249,620,601   Hits: 13,418,964   Payback %: 96.2 % Hit Frequency %: 5.2 %
+            // Spins: 259,440,000   Credits Won: 249,620,601   Hits: 13,418,964   Payback: 96.25%   Hit Frequency: 5.15%
 
             // The ordering of the symbols on the reel WILL affect the payback% and hit frequency %.
-            // The symbol counts are according to the PAR sheet on each reel.
+            // The symbol counts are according to the PAR sheet for each reel.
             // This is one of MANY reel set orderings that will give the payback and hit frequency above.
 
-            _reels[0] = new Symbol[] { Symbol.CL, Symbol.SF, Symbol.LT, Symbol.LH, Symbol.CL, Symbol.LT, Symbol.BO, Symbol.SG, Symbol.BO, Symbol.SF, Symbol.CL, Symbol.BO, Symbol.CL, Symbol.TU, Symbol.SF, Symbol.CL, Symbol.SG, Symbol.SG, Symbol.LH, Symbol.LO, Symbol.LM, Symbol.LM, Symbol.LM, Symbol.BU, Symbol.LH, Symbol.TU, Symbol.TU, Symbol.SG, Symbol.BO, Symbol.BU, Symbol.SF, Symbol.BO, Symbol.TU, Symbol.LH, Symbol.BO, Symbol.WS, Symbol.CL, Symbol.TU, Symbol.BU, Symbol.SG, Symbol.LO, Symbol.LM, Symbol.LH, Symbol.SF, Symbol.TU, Symbol.BU, Symbol.BU  };
+            _reels[0] = new Symbol[] { Symbol.SG, Symbol.TU, Symbol.LM, Symbol.SG, Symbol.BO, Symbol.LM, Symbol.LO, Symbol.BO, Symbol.TU, Symbol.TU, Symbol.LM, Symbol.BO, Symbol.SF, Symbol.BU, Symbol.BU, Symbol.LH, Symbol.TU, Symbol.SG, Symbol.CL, Symbol.TU, Symbol.BO, Symbol.WS, Symbol.TU, Symbol.LO, Symbol.CL, Symbol.LT, Symbol.LH, Symbol.SF, Symbol.SF, Symbol.WS, Symbol.SF, Symbol.CL, Symbol.LT, Symbol.BU, Symbol.CL, Symbol.SG, Symbol.BO, Symbol.SG, Symbol.LH, Symbol.LH, Symbol.CL, Symbol.LH, Symbol.SF, Symbol.BU, Symbol.LM, Symbol.BO, Symbol.CL };
 
-            _reels[1] = new Symbol[] { Symbol.LO, Symbol.BU, Symbol.BU, Symbol.LH, Symbol.LM, Symbol.SG, Symbol.BU, Symbol.LO, Symbol.SF, Symbol.SF, Symbol.LT, Symbol.CL, Symbol.CL, Symbol.SG, Symbol.LT, Symbol.SF, Symbol.BO, Symbol.SG, Symbol.TU, Symbol.LH, Symbol.CL, Symbol.LH, Symbol.LO, Symbol.BO, Symbol.CL, Symbol.TU, Symbol.WS, Symbol.SG, Symbol.SF, Symbol.TU, Symbol.LH, Symbol.LO, Symbol.BO, Symbol.LM, Symbol.LM, Symbol.BU, Symbol.SF, Symbol.CL, Symbol.LM, Symbol.LO, Symbol.SG, Symbol.WS, Symbol.CL, Symbol.TU, Symbol.SG, Symbol.SG  };
+            _reels[1] = new Symbol[] { Symbol.BO, Symbol.WS, Symbol.CL, Symbol.LH, Symbol.LT, Symbol.WS, Symbol.SF, Symbol.TU, Symbol.LH, Symbol.SF, Symbol.CL, Symbol.LM, Symbol.SG, Symbol.TU, Symbol.BU, Symbol.BO, Symbol.SG, Symbol.LO, Symbol.BO, Symbol.BU, Symbol.CL, Symbol.CL, Symbol.LO, Symbol.SG, Symbol.SF, Symbol.BU, Symbol.TU, Symbol.LT, Symbol.SG, Symbol.SF, Symbol.CL, Symbol.TU, Symbol.LO, Symbol.LO, Symbol.SG, Symbol.BO, Symbol.LM, Symbol.SG, Symbol.LH, Symbol.SF, Symbol.BU, Symbol.LM, Symbol.CL, Symbol.LM, Symbol.LH, Symbol.LO };
 
-            _reels[2] = new Symbol[] { Symbol.LH, Symbol.CL, Symbol.TU, Symbol.LM, Symbol.LO, Symbol.BO, Symbol.TU, Symbol.LH, Symbol.SG, Symbol.SG, Symbol.CL, Symbol.CL, Symbol.TU, Symbol.SG, Symbol.BO, Symbol.LH, Symbol.LO, Symbol.SF, Symbol.SG, Symbol.LO, Symbol.BU, Symbol.BO, Symbol.CL, Symbol.LH, Symbol.CL, Symbol.TU, Symbol.BU, Symbol.LM, Symbol.LT, Symbol.LO, Symbol.BU, Symbol.LH, Symbol.BU, Symbol.SG, Symbol.TU, Symbol.SF, Symbol.SF, Symbol.SF, Symbol.LO, Symbol.BU, Symbol.WS, Symbol.SF, Symbol.BO, Symbol.LM, Symbol.SF, Symbol.LO, Symbol.LH, Symbol.LH  };
+            _reels[2] = new Symbol[] { Symbol.LH, Symbol.BO, Symbol.CL, Symbol.LO, Symbol.SG, Symbol.LH, Symbol.LH, Symbol.CL, Symbol.WS, Symbol.SG, Symbol.BU, Symbol.BU, Symbol.TU, Symbol.SF, Symbol.LM, Symbol.BO, Symbol.LO, Symbol.TU, Symbol.SF, Symbol.LO, Symbol.LH, Symbol.BU, Symbol.LT, Symbol.SF, Symbol.SG, Symbol.SG, Symbol.CL, Symbol.TU, Symbol.BO, Symbol.LO, Symbol.LH, Symbol.BU, Symbol.SF, Symbol.LO, Symbol.CL, Symbol.CL, Symbol.BO, Symbol.LM, Symbol.TU, Symbol.SF, Symbol.LH, Symbol.LM, Symbol.BU, Symbol.TU, Symbol.LT, Symbol.SF, Symbol.SG, Symbol.LO };
 
-            _reels[3] = new Symbol[] { Symbol.LH, Symbol.WS, Symbol.LM, Symbol.LT, Symbol.LH, Symbol.SF, Symbol.SF, Symbol.SG, Symbol.LH, Symbol.TU, Symbol.WS, Symbol.SF, Symbol.TU, Symbol.CL, Symbol.TU, Symbol.BO, Symbol.SF, Symbol.BU, Symbol.TU, Symbol.BO, Symbol.WS, Symbol.BO, Symbol.SG, Symbol.LM, Symbol.SF, Symbol.LH, Symbol.CL, Symbol.CL, Symbol.SF, Symbol.SG, Symbol.LH, Symbol.WS, Symbol.CL, Symbol.SG, Symbol.BO, Symbol.SG, Symbol.BU, Symbol.BU, Symbol.LT, Symbol.BU, Symbol.CL, Symbol.LM, Symbol.SF, Symbol.LH, Symbol.TU, Symbol.SG, Symbol.SF, Symbol.TU, Symbol.LM, Symbol.LM  };
+            _reels[3] = new Symbol[] { Symbol.CL, Symbol.WS, Symbol.LT, Symbol.CL, Symbol.CL, Symbol.SF, Symbol.SG, Symbol.SF, Symbol.LM, Symbol.LH, Symbol.LT, Symbol.CL, Symbol.CL, Symbol.BO, Symbol.SF, Symbol.SF, Symbol.WS, Symbol.TU, Symbol.SG, Symbol.BO, Symbol.BU, Symbol.LH, Symbol.WS, Symbol.TU, Symbol.SF, Symbol.SG, Symbol.SG, Symbol.BU, Symbol.LM, Symbol.LM, Symbol.CL, Symbol.LH, Symbol.LH, Symbol.BO, Symbol.TU, Symbol.SF, Symbol.SF, Symbol.TU, Symbol.BU, Symbol.SF, Symbol.BU, Symbol.WS, Symbol.LM, Symbol.LH, Symbol.SG, Symbol.SG, Symbol.TU, Symbol.BO, Symbol.LH, Symbol.TU };
 
-            _reels[4] = new Symbol[] { Symbol.LH, Symbol.SG, Symbol.TU, Symbol.TU, Symbol.BO, Symbol.SF, Symbol.WS, Symbol.CL, Symbol.BO, Symbol.BU, Symbol.TU, Symbol.CL, Symbol.SF, Symbol.LH, Symbol.SG, Symbol.LT, Symbol.TU, Symbol.BU, Symbol.LH, Symbol.LM, Symbol.TU, Symbol.CL, Symbol.LH, Symbol.BU, Symbol.SF, Symbol.TU, Symbol.SF, Symbol.TU, Symbol.LH, Symbol.BO, Symbol.SF, Symbol.LM, Symbol.SF, Symbol.SF, Symbol.WS, Symbol.CL, Symbol.LT, Symbol.BU, Symbol.SG, Symbol.CL, Symbol.LM, Symbol.LM, Symbol.LH, Symbol.BU, Symbol.SG, Symbol.BO, Symbol.CL, Symbol.LH, Symbol.SG, Symbol.SG  };
+            _reels[4] = new Symbol[] { Symbol.LH, Symbol.BU, Symbol.SG, Symbol.SF, Symbol.CL, Symbol.LH, Symbol.TU, Symbol.BU, Symbol.LT, Symbol.SF, Symbol.BO, Symbol.WS, Symbol.LM, Symbol.TU, Symbol.LT, Symbol.LH, Symbol.SF, Symbol.LH, Symbol.LH, Symbol.CL, Symbol.BU, Symbol.CL, Symbol.CL, Symbol.CL, Symbol.WS, Symbol.BU, Symbol.SF, Symbol.BU, Symbol.TU, Symbol.TU, Symbol.LH, Symbol.SG, Symbol.SG, Symbol.TU, Symbol.SG, Symbol.LH, Symbol.SG, Symbol.LM, Symbol.TU, Symbol.BO, Symbol.SF, Symbol.TU, Symbol.SG, Symbol.CL, Symbol.BO, Symbol.SF, Symbol.BO, Symbol.LM, Symbol.SF, Symbol.LM };
 
         } // End method SetFixedReels
+
+        public static void Shuffle(Symbol[] array)
+        {
+            // Fisher - Yates shuffle implementation
+
+            int n = array.Length;
+            for (int i = 0; i < (n - 1); i++)
+            {
+                int r = i + _rand.Next(n - i);
+
+                Symbol t = array[r];
+                array[r] = array[i];
+                array[i] = t;
+            }
+
+        } // End method Shuffle
+
 
         private void PrintAllReels()
         {
             for (int num = 0; num < NUM_REELS; num++) // all 5 _reels
             {
                 Console.Write("\nReel[{0}]: [  ", num);
-                //Console.Write(string.Join(", ", _reels[num]));
                 for (int s = 0; s < _reels[num].Length - 1; s++)
-                    Console.Write("\"{0}\", ", _reels[num][s]);
-                Console.WriteLine("\"{0}\"  ];", (_reels[num][_reels[num].Length - 1]));
-                
-                //Console.WriteLine("  ]\n");
+                    Console.Write("{0}, ", _reels[num][s]);
+                Console.WriteLine("{0}  ];", (_reels[num][_reels[num].Length - 1]));
             }
             Console.WriteLine();
         } // End method PrintAllReels
@@ -201,7 +206,7 @@ namespace Lobstermania
                         else
                         {
                             // Use random bonus win
-                            bonusWin = Bonus.GetPrizes();
+                            bonusWin = Bonus.GetPrizes(_rand);
                             Stats.BonusWinCount++;
                             Stats.BonusWinCredits += bonusWin;
                             Stats.GameBonusWin += bonusWin;
@@ -329,7 +334,7 @@ namespace Lobstermania
         {
             int[] lineIdxs = new int[5]; // Random starting slots for each reel
             for (int i = 0; i < NUM_REELS; i++)
-                lineIdxs[i] = Rand.Next(_reels[i].Length);
+                lineIdxs[i] = _rand.Next(_reels[i].Length);
 
             int i1, i2, i3;
             int r = 0; // reel number 1-5 zero adjusted
@@ -478,23 +483,14 @@ namespace Lobstermania
             Symbol[] payline = new Symbol[5];
             int[] slotIdxs = new int[5];
             float percentComplete = 0.0f;
+            StreamWriter writer = null; // Used only if property PrintPaylines is true
 
             DateTime start_t = DateTime.Now;
-            //StreamWriter writer = new StreamWriter("paylines.txt");
+            if (PrintPaylines)
+                writer = new StreamWriter("paylines.txt");
 
-            //Console.Clear();
-            Console.WriteLine("\nThis function returns the absolute (deterministic) payback and hit rate percentages.\n");
-            Console.WriteLine("Running game metrics, (this might take a while) ...\n");
-
-            // Randomize the _reels (1st use of Random()
-            for (int i = 0; i < NUM_REELS; i++) // randomize each of the 5 _reels
-                ArrayShuffle.Shuffle(_reels[i]);
-
-            if (UseFixedReelLayout)
+            if (!UseRandomReelLayout)
                 SetFixedReels();
-            
-            if(PrintReels)
-                PrintAllReels();
 
             // Payback %
             // 259,440,000 combinations (47x46x48x50x50)
@@ -606,29 +602,32 @@ namespace Lobstermania
                                         hits++;
                                         payBack += win;
 
-                                        // Write each winning line (including scatters not on a line) to text file
-                                        //writer.Write("Payline[{0}] = [  ",hits);
-                                        //foreach (Symbol s in payline)
-                                        //    writer.Write("{0}  ", s.ToString());
-                                        //writer.WriteLine("]  PAYOUT => {0}", win);
+                                        if (PrintPaylines)
+                                        {
+                                            // Write each winning line (including scatters not on a line) to text file
+                                            writer.Write("Payline[{0}] = [ ", hits);
+                                            foreach (Symbol s in payline)
+                                                writer.Write("{0}  ", s);
+                                            writer.WriteLine(" ]  PAYOUT => {0}", win);
+                                        }
                                     }
 
-                                } 
+                                }
                             } // End s5Idx block
-            //writer.Close();
+            if (PrintPaylines)
+                writer.Close();
 
-            PaybackPercent = Math.Round((double)payBack / (double)creditsSpent, 2);
-            HitFreq = Math.Round((double)hits / (double)creditsSpent, 2);
-            
-            Console.Write("\nPayback%: {0:P2}  ", (double)payBack / (double)creditsSpent);
-            Console.WriteLine("HitFreq: {0:P2}", (double)hits / (double)creditsSpent);
+            PaybackPercent = (double)payBack / (double)creditsSpent;
+            HitFreq = (double)hits / (double)creditsSpent;
 
-            Console.WriteLine("\nSeed: {0}  Payback%: {1:P1}  Hit Freq: {2:P1}  Hits: {3:N0}  Credits Won: {4:N0},  Spins: {5:N0}",
-                _seed, PaybackPercent, HitFreq, hits, payBack, creditsSpent);
+            if (PrintReels)
+                PrintAllReels();
 
             DateTime end_t = DateTime.Now;
             TimeSpan runtime = end_t - start_t;
-            Console.WriteLine("\nTest Metrics completed in {0:t}\n", runtime);
+
+            Console.WriteLine("\nPayback%: {0:P2}  Hit Freq: {1:P2}  Hits: {2:N0}  Credits Won: {3:N0},  Spins: {4:N0}  Runtime: {5}",
+                PaybackPercent, HitFreq, hits, payBack, creditsSpent, runtime.ToString(@"hh\:mm\:ss"));
 
         } // End method TestMetrics
 
